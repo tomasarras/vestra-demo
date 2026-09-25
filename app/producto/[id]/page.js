@@ -6,6 +6,8 @@ import StoreHeader from "@/components/StoreHeader";
 import ProductImagePlaceholder from "@/components/ProductImagePlaceholder";
 import AddToCartPanel from "@/components/AddToCartPanel";
 
+export const dynamic = "force-dynamic";
+
 export default async function ProductoPage({ params }) {
   const { id } = await params;
   const product = await prisma.product.findUnique({

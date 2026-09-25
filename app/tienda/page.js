@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import StoreHeader from "@/components/StoreHeader";
 import ProductCard from "@/components/ProductCard";
 
+export const dynamic = "force-dynamic";
+
 export default async function TiendaPage({ searchParams }) {
   const { categoria } = await searchParams;
 
