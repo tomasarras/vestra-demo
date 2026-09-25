@@ -10,10 +10,12 @@ Vestra is a fictional clothing store demo (portfolio project): Next.js App Route
 
 ```
 npm run dev       # next dev (localhost:3000)
-npm run build     # prisma generate && next build
+npm run build     # prisma generate && prisma migrate deploy && next build
 npm run lint      # eslint
 npm run db:seed   # node prisma/seed.mjs — wipes nothing, upserts the fixed demo catalog/coupons
 ```
+
+Unlike `comanda-demo` (`prisma generate && next build`, migrations applied by hand before deploying), this build runs `prisma migrate deploy` itself. Reason: Vercel env vars here are marked `Secret` (write-only — the dashboard won't let you reveal `DATABASE_URL`/`DIRECT_URL` again after creation, only rotate them), so there was no way to copy the real Neon connection string out to run migrations from a local shell before the first deploy. Running `migrate deploy` in the build step means the only DB setup step after a fresh deploy is seeding once via `POST /api/demo/reset`.
 
 No test suite exists in this repo.
 
