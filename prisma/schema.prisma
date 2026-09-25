@@ -1,0 +1,94 @@
+// Vestra — fictional clothing store demo (portfolio project).
+// Prices are stored as whole-peso Int (not Decimal): ARS has no meaningful
+// cents in casual display, and this keeps the schema portable if local dev
+// ever needs a connector without Decimal support.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Category {
+  id        String           @id @default(cuid())
+  name      String           @unique
+  slug      String           @unique
+  products  Product[]
+  coupons   CouponCategory[]
+  createdAt DateTime         @default(now())
+}
+
+model Product {
+  id          String         @id @default(cuid())
+  name        String
+  description String?
+  price       Int
+  sizes       String[]
+  active      Boolean        @default(true)
+  categoryId  String?
+  category    Category?      @relation(fields: [categoryId], references: [id])
+  images      ProductImage[]
+  orderItems  OrderItem[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+model ProductImage {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url       String
+  order     Int     @default(0)
+}
+
+// remainingUses mirrors quantity and is decremented only at checkout
+// (lib/coupons.js redeemCoupon), inside the same transaction as the order
+// — applying a coupon in the cart is just a preview (validateCoupon) and
+// never consumes a slot, so an abandoned cart doesn't burn a coupon.
+model Coupon {
+  id              String           @id @default(cuid())
+  code            String           @unique
+  discountPercent Int
+  appliesToAll    Boolean          @default(false)
+  categories      CouponCategory[]
+  quantity        Int?
+  remainingUses   Int?
+  expiresAt       DateTime?
+  active          Boolean          @default(true)
+  createdAt       DateTime         @default(now())
+}
+
+model CouponCategory {
+  couponId   String
+  coupon     Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([couponId, categoryId])
+}
+
+model Order {
+  id             String      @id @default(cuid())
+  items          OrderItem[]
+  couponCode     String?
+  discountAmount Int         @default(0)
+  subtotal       Int
+  total          Int
+  createdAt      DateTime    @default(now())
+}
+
+model OrderItem {
+  id          String  @id @default(cuid())
+  orderId     String
+  order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product @relation(fields: [productId], references: [id])
+  productName String
+  size        String?
+  unitPrice   Int
+  quantity    Int
+}
