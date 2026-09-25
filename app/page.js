@@ -1,87 +1,111 @@
-import Link from "next/link";
-import { prisma } from "@/lib/prisma";
-import StoreHeader from "@/components/StoreHeader";
-import ProductCard from "@/components/ProductCard";
+"use client";
 
-export const dynamic = "force-dynamic";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { ShoppingBag, ShieldCheck, RotateCcw, Loader2 } from "lucide-react";
+import { useAdmin } from "@/components/AdminProvider";
 
-export default async function HomePage() {
-  const [featured, categories] = await Promise.all([
-    prisma.product.findMany({
-      where: { active: true },
-      include: { category: true, images: { orderBy: { order: "asc" } } },
-      orderBy: { createdAt: "desc" },
-      take: 4,
-    }),
-    prisma.category.findMany({ orderBy: { name: "asc" } }),
-  ]);
+export default function RoleSelectorPage() {
+  const router = useRouter();
+  const { enterAdmin } = useAdmin();
+  const [confirmingReset, setConfirmingReset] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const [resetMessage, setResetMessage] = useState("");
+
+  function handleAdmin() {
+    enterAdmin();
+    router.push("/admin");
+  }
+
+  async function handleReset() {
+    setResetting(true);
+    setResetMessage("");
+    try {
+      const res = await fetch("/api/demo/reset", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "No se pudo restablecer la demo");
+      setResetMessage("Demo restablecida — todo volvió al estado inicial.");
+    } catch (err) {
+      setResetMessage(err.message);
+    } finally {
+      setResetting(false);
+      setConfirmingReset(false);
+    }
+  }
 
   return (
-    <>
-      <StoreHeader />
-      <main>
-        <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
-          <div className="max-w-xl">
-            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">Vestra</h1>
-            <p className="mt-4 text-lg text-black/60">Moda simple, todos los días.</p>
-            <Link
-              href="/tienda"
-              className="mt-8 inline-block rounded-full bg-black px-6 py-3 text-sm font-semibold text-white hover:bg-black/80"
+    <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-4 text-center">
+      <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-accent text-accent-foreground">
+        <ShoppingBag size={26} />
+      </span>
+      <h1 className="text-2xl font-bold">Vestra</h1>
+      <p className="max-w-sm text-sm text-black/50">Demo de portfolio · elegí cómo querés entrar.</p>
+
+      <div className="mt-4 grid w-full max-w-md grid-cols-1 gap-4 sm:grid-cols-2">
+        <button
+          type="button"
+          onClick={() => router.push("/inicio")}
+          className="flex flex-col items-start gap-3 rounded-2xl border border-black/10 bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+        >
+          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent text-accent-foreground">
+            <ShoppingBag size={20} />
+          </span>
+          <span className="block text-base font-semibold">Cliente</span>
+          <span className="block text-sm text-black/50">Comprar ropa en la tienda</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={handleAdmin}
+          className="flex flex-col items-start gap-3 rounded-2xl border border-black/10 bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+        >
+          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-black text-white">
+            <ShieldCheck size={20} />
+          </span>
+          <span className="block text-base font-semibold">Administrador</span>
+          <span className="block text-sm text-black/50">Cargar productos, categorías y cupones</span>
+        </button>
+      </div>
+
+      <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+        {!confirmingReset ? (
+          <button
+            type="button"
+            onClick={() => setConfirmingReset(true)}
+            className="flex items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-semibold text-black/60 hover:bg-black/5"
+          >
+            <RotateCcw size={16} />
+            Restablecer demo
+          </button>
+        ) : (
+          <div className="flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-800">
+            <span>¿Borrar todo y volver al estado inicial?</span>
+            <button
+              type="button"
+              onClick={handleReset}
+              disabled={resetting}
+              className="flex items-center gap-1.5 rounded-full bg-amber-600 px-3 py-1 text-xs font-semibold text-white hover:bg-amber-700 disabled:opacity-60"
             >
-              Ver la tienda
-            </Link>
+              {resetting && <Loader2 size={12} className="animate-spin" />}
+              Sí, restablecer
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmingReset(false)}
+              disabled={resetting}
+              className="text-xs font-semibold text-amber-700 hover:underline"
+            >
+              Cancelar
+            </button>
           </div>
-        </section>
-
-        <section className="border-y border-black/10 bg-white py-16">
-          <div className="mx-auto max-w-3xl px-4 text-center sm:px-6">
-            <h2 className="text-sm font-semibold uppercase tracking-widest text-accent">Quiénes somos</h2>
-            <p className="mt-4 text-lg leading-relaxed text-black/70">
-              Vestra nació de una idea simple: la ropa de todos los días no debería complicarte la vida. Diseñamos
-              prendas básicas y versátiles, pensadas para durar, con materiales de calidad y precios honestos. Nada
-              de esto es real — Vestra es un proyecto de portfolio, una tienda ficticia armada para mostrar cómo
-              construiría una experiencia de compra completa: catálogo, carrito, cupones y un panel de
-              administración, de punta a punta.
-            </p>
-          </div>
-        </section>
-
-        {categories.length > 0 && (
-          <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-            <h2 className="text-lg font-semibold">Categorías</h2>
-            <div className="mt-4 flex flex-wrap gap-3">
-              {categories.map((c) => (
-                <Link
-                  key={c.id}
-                  href={`/tienda?categoria=${c.slug}`}
-                  className="rounded-full border border-black/15 px-4 py-2 text-sm font-medium hover:border-black"
-                >
-                  {c.name}
-                </Link>
-              ))}
-            </div>
-          </section>
         )}
+      </div>
 
-        {featured.length > 0 && (
-          <section className="mx-auto max-w-6xl px-4 pb-20 sm:px-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Destacados</h2>
-              <Link href="/tienda" className="text-sm font-medium text-accent hover:underline">
-                Ver todo
-              </Link>
-            </div>
-            <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-              {featured.map((p) => (
-                <ProductCard key={p.id} product={p} />
-              ))}
-            </div>
-          </section>
-        )}
-      </main>
-      <footer className="border-t border-black/10 py-8 text-center text-xs text-black/40">
-        Vestra — proyecto de portfolio. <Link href="/admin" className="underline">Admin</Link>
-      </footer>
-    </>
+      {resetMessage && <p className="mt-3 text-sm text-black/50">{resetMessage}</p>}
+
+      <p className="mt-8 max-w-md text-center text-xs text-black/40">
+        Es un proyecto de portfolio: no hay contraseñas reales, elegís cómo entrar y listo. Los datos son ficticios.
+      </p>
+    </div>
   );
 }

@@ -18,14 +18,12 @@ export default function AdminLayout({ children }) {
   const router = useRouter();
 
   useEffect(() => {
-    if (loaded && !isAdmin && pathname !== "/admin") router.replace("/admin");
-  }, [loaded, isAdmin, pathname, router]);
+    if (loaded && !isAdmin) router.replace("/");
+  }, [loaded, isAdmin, router]);
 
-  if (!loaded) {
+  if (!loaded || !isAdmin) {
     return <div className="flex min-h-screen items-center justify-center text-sm text-black/40">Cargando…</div>;
   }
-
-  if (!isAdmin) return children;
 
   return (
     <div className="min-h-screen bg-[var(--background)]">
