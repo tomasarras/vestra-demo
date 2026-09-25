@@ -15,7 +15,9 @@ npm run lint      # eslint
 npm run db:seed   # node prisma/seed.mjs — wipes nothing, upserts the fixed demo catalog/coupons
 ```
 
-Unlike `comanda-demo` (`prisma generate && next build`, migrations applied by hand before deploying), this build runs `prisma migrate deploy` itself. Reason: Vercel env vars here are marked `Secret` (write-only — the dashboard won't let you reveal `DATABASE_URL`/`DIRECT_URL` again after creation, only rotate them), so there was no way to copy the real Neon connection string out to run migrations from a local shell before the first deploy. Running `migrate deploy` in the build step means the only DB setup step after a fresh deploy is seeding once via `POST /api/demo/reset`.
+Unlike `comanda-demo` (`prisma generate && next build`, migrations applied by hand before deploying), this build runs `prisma migrate deploy` itself. Reason: Vercel env vars here are marked `Secret` (write-only — the dashboard won't let you reveal `DATABASE_URL` again after creation, only rotate it), so there was no way to copy the real Neon connection string out to run migrations from a local shell before the first deploy. Running `migrate deploy` in the build step means the only DB setup step after a fresh deploy is seeding once via `POST /api/demo/reset`.
+
+**Single `DATABASE_URL`, no `directUrl`.** Also unlike `comanda-demo`. The Neon-via-Vercel-Marketplace integration that provisioned this project's database left the `DIRECT_URL` variable it created completely empty (a bug/quirk in that integration, not a deliberate choice) — Vercel's own dashboard can't reveal an existing `Secret`-type value either, so there was no way to fix `DIRECT_URL` by hand. `directUrl` is optional in Prisma; dropping it and running everything (including `migrate deploy`) through `DATABASE_URL` alone works fine at this project's scale.
 
 No test suite exists in this repo.
 
