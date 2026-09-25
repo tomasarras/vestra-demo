@@ -32,7 +32,7 @@ export default function ProductGallery({ images, alt, categorySlug }) {
             onClick={() => setLightboxOpen(true)}
             className="absolute inset-0 h-full w-full cursor-zoom-in"
           >
-            <Image src={active.url} alt={alt} fill sizes="(max-width: 640px) 100vw, 50vw" className="object-contain" />
+            <Image src={active.url} alt={alt} fill sizes="(max-width: 640px) 100vw, 50vw" className="object-cover" />
           </button>
         ) : (
           <ProductImagePlaceholder categorySlug={categorySlug} className="h-full w-full" />
