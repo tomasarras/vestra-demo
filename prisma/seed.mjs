@@ -26,6 +26,9 @@ async function main() {
         price: p.price,
         sizes: p.sizes,
         categoryId: categoryBySlug[p.categorySlug]?.id,
+        images: {
+          create: (p.images || []).map((url, order) => ({ url, order })),
+        },
       },
     });
   }
